@@ -20,8 +20,13 @@ load_project_env() {
         exit 1
     fi
     
-    echo "Loading environment from: $env_file"
-    export $(grep -v '^#' "$env_file" | xargs)
+    # Change to project directory to ensure relative paths work correctly
+    local original_dir=$(pwd)
+    cd "$project_dir"
+    # Source the .env file to allow shell expansion
+    source "$env_file"
+    # Return to original directory
+    cd "$original_dir"
 }
 
 # Function to parse project parameter from command line arguments
@@ -53,7 +58,10 @@ load_env_with_fallback() {
     else
         # Fallback to loading local .env for backward compatibility
         if [ -f "$script_dir/.env" ]; then
-            export $(grep -v '^#' "$script_dir/.env" | xargs)
+            local original_dir=$(pwd)
+            cd "$script_dir"
+            source "$script_dir/.env"
+            cd "$original_dir"
         fi
     fi
 }

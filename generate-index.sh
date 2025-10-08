@@ -98,6 +98,9 @@ find "$OUTPUT_DIR" -type f -name "*.html" ! -name "index*.html" \
 
         # Use INDEX_TEMPLATE if available, otherwise fallback to simple HTML
         if [ -f "$INDEX_TEMPLATE" ]; then
+            # Get current year for template replacement
+            current_year=$(date +%Y)
+            
             # Use file-based replacement to handle special characters properly
             cp "$INDEX_TEMPLATE" "$index_file"
             
@@ -105,6 +108,7 @@ find "$OUTPUT_DIR" -type f -name "*.html" ! -name "index*.html" \
             sed -i "s/\$title/Articles - Page $page/g" "$index_file"
             sed -i "s|\$CSS|$CSS|g" "$index_file"
             sed -i "s/\$page/$page/g" "$index_file"
+            sed -i "s/\$year/$current_year/g" "$index_file"
             
             # Handle first_excerpt - escape special characters for sed
             if [ -n "$first_excerpt" ]; then

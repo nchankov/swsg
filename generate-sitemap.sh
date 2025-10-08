@@ -12,8 +12,14 @@ PROJECT_DIR=$(parse_project_args "$@")
 load_env_with_fallback "$PROJECT_DIR" "$DIR"
 
 OUTPUT_DIR="${OUTPUT_DIR:-$DIR/dist}"
+# Resolve symlinks to get the actual path
+if [ -L "$OUTPUT_DIR" ]; then
+    OUTPUT_DIR=$(readlink -f "$OUTPUT_DIR")
+fi
 DOMAIN="${DOMAIN:-https://example.com}"
 SITEMAP_FILE="${SITEMAP_FILE:-sitemap.xml}"
+
+
 
 sitemap_path="$OUTPUT_DIR/$SITEMAP_FILE"
 
@@ -69,7 +75,6 @@ find "$OUTPUT_DIR" -type f -name "*.html" ! -name "index*.html" | sort | while r
         rel_path="/$rel_path"
     fi
     
-    echo "📄 Adding page: $rel_path"
     add_url "$rel_path" "$file" "0.8" "monthly"
 done
 
@@ -94,7 +99,6 @@ find "$OUTPUT_DIR" -type f -name "index*.html" | sort | while read -r file; do
     
     # Skip if it's the root path (already added)
     if [ "$rel_path" != "/" ]; then
-        echo "📑 Adding index: $rel_path"
         add_url "$rel_path" "$file" "0.9" "weekly"
     fi
 done
@@ -109,7 +113,3 @@ echo "✅ Sitemap generated: $sitemap_path"
 # Show stats
 total_urls=$(grep -c "<loc>" "$sitemap_path")
 echo "📊 Total URLs in sitemap: $total_urls"
-
-# Show first few URLs for verification
-echo "🔍 Sample URLs:"
-grep "<loc>" "$sitemap_path" | head -5 | sed 's/.*<loc>\(.*\)<\/loc>.*/  \1/'

@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # current dir
-DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+SWSG_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 # Source the shared environment loader
-source "$DIR/lib/env-loader.sh"
+source "$SWSG_DIR/lib/env-loader.sh"
 
 # Parse command line arguments
 PROJECT_DIR=$(parse_project_args "$@")
@@ -20,7 +20,7 @@ fi
 load_project_env "$PROJECT_DIR"
 
 #execute
-$DIR/generate-assets.sh --project "$PROJECT_DIR"
-$DIR/generate-pages.sh --project "$PROJECT_DIR"
-$DIR/generate-index.sh --project "$PROJECT_DIR"
-$DIR/generate-sitemap.sh --project "$PROJECT_DIR"
+$SWSG_DIR/generate-assets.sh --project "$PROJECT_DIR"
+$SWSG_DIR/generate-pages.sh --project "$PROJECT_DIR"
+$SWSG_DIR/generate-index.sh --project "$PROJECT_DIR"
+$SWSG_DIR/generate-sitemap.sh --project "$PROJECT_DIR"
