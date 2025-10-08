@@ -111,7 +111,7 @@ find "$OUTPUT_DIR" -type f -name "*.html" ! -name "index*.html" \
 
             # Extract featured image from HTML only if it's within the featured image section
             # Look for images that appear right after the <body> tag and before <header>
-            featured=$(sed -n '/<body>/,/<header>/p' "$file" | grep -oP '(?<=<img src=")[^"]+' | head -n1)
+            featured=$(sed -n '/<body/,/<header>/p' "$file" | grep -oP '(?<=<img src=")[^"]+' | head -n1)
             rel_path=""
 
             # Compute relative path from index page to featured image
