@@ -109,9 +109,9 @@ find "$OUTPUT_DIR" -type f -name "*.html" ! -name "index*.html" \
             title=$(grep -oP '(?<=<title>)[^<]+' "$file" | head -n1)
             [ -z "$title" ] && title=$(basename "$file" .html)
 
-            # Extract featured image from HTML only if it's within the featured image section
-            # Look for images that appear right after the <body> tag and before <header>
-            featured=$(sed -n '/<body/,/<header>/p' "$file" | grep -oP '(?<=<img src=")[^"]+' | head -n1)
+            # Extract featured image from HTML (first non-logo image)
+            # Get all img src attributes and filter out logos, take the first one
+            featured=$(grep -oP 'src="[^"]*"' "$file" | grep -v logo | head -1 | cut -d'"' -f2)
             rel_path=""
 
             # Compute relative path from index page to featured image
@@ -137,17 +137,17 @@ find "$OUTPUT_DIR" -type f -name "*.html" ! -name "index*.html" \
 
         # Generate pagination links
         pagination=""
-        pagination+="<nav style='margin-top:20px;'>"
+        pagination+="<nav class=\"pagination\">"
         if (( page > 1 )); then
             prev=$((page - 1))
             prev_link="index${prev}.html"
             [ $prev -eq 1 ] && prev_link="index.html"
-            pagination+="<a href=\"$prev_link\">Previous</a>"
+            pagination+="<a class=\"prev\" href=\"$prev_link\">Previous</a>"
         fi
         pagination+=" Page $page of $total_pages "
         if (( page < total_pages )); then
             next=$((page + 1))
-            pagination+="<a href=\"index${next}.html\">Next</a>"
+            pagination+="<a class=\"next\" href=\"index${next}.html\">Next</a>"
         fi
         pagination+="</nav>"
 
