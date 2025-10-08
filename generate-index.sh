@@ -22,7 +22,67 @@ if [ -L "$OUTPUT_DIR" ]; then
 fi
 ITEMS_PER_PAGE="${ITEMS_PER_PAGE:-10}"
 INDEX_TEMPLATE="${INDEX_TEMPLATE:-$DIR/templates/index.html}"
+ARTICLE_TEMPLATE="${ARTICLE_TEMPLATE:-$DIR/templates/article.html}"
 CSS="${CSS:-}"
+
+# Function to render article using template
+render_article() {
+    local title="$1"
+    local file_path="$2"
+    local featured_img="$3"
+    local excerpt="$4"
+    local current_year=$(date +%Y)
+    
+    if [ -f "$ARTICLE_TEMPLATE" ]; then
+        # Use article template
+        local article_html
+        article_html=$(cat "$ARTICLE_TEMPLATE")
+        
+        # Handle featured image conditionally
+        local featured_style=""
+        if [ -z "$featured_img" ]; then
+            featured_style="display:none;"
+            featured_img=""
+        fi
+        
+        # Handle excerpt conditionally  
+        local excerpt_display="$excerpt"
+        if [ -z "$excerpt" ]; then
+            excerpt_display=""
+        fi
+        
+        # Use a Python one-liner for safe string replacement
+        article_html=$(python3 -c "
+import sys
+template = '''$article_html'''
+title = '''$title'''
+link = '''$(basename "$file_path")'''
+featured = '''$featured_img'''
+featured_style = '''$featured_style'''
+excerpt = '''$excerpt_display'''
+year = '''$current_year'''
+
+result = template.replace('\$title', title)
+result = result.replace('\$link', link)
+result = result.replace('\$featured', featured)
+result = result.replace('\$featured_style', featured_style)
+result = result.replace('\$excerpt', excerpt)
+result = result.replace('\$year', year)
+
+print(result, end='')
+")
+        
+        echo "$article_html"
+    else
+        # Fallback to inline HTML
+        local article_html="<li style='margin-bottom:20px;'>"
+        [ -n "$featured_img" ] && article_html+="<img src=\"$featured_img\" alt=\"$(echo "$title" | sed 's/&amp;/\&/g')\">"
+        article_html+="<a href=\"$(basename "$file_path")\">$title</a>"
+        [ -n "$excerpt" ] && article_html+="<p>$excerpt</p>"
+        article_html+="</li>"
+        echo "$article_html"
+    fi
+}
 
 # Process each directory containing HTML files
 find "$OUTPUT_DIR" -type f -name "*.html" ! -name "index*.html" \
@@ -70,11 +130,9 @@ find "$OUTPUT_DIR" -type f -name "*.html" ! -name "index*.html" \
                 first_excerpt="$excerpt"
             fi
 
-            article_list+="<li style='margin-bottom:20px;'>"
-            [ -n "$rel_path" ] && article_list+="<img src=\"$rel_path\" alt=\"$(echo "$title" | sed 's/&amp;/\&/g')\">"
-            article_list+="<a href=\"$(basename "$file")\">$title</a>"
-            [ -n "$excerpt" ] && article_list+="<p>$excerpt</p>"
-            article_list+="</li>"
+            # Render article using template or fallback
+            article_html=$(render_article "$title" "$file" "$rel_path" "$excerpt")
+            article_list+="$article_html"
         done
 
         # Generate pagination links
@@ -94,7 +152,13 @@ find "$OUTPUT_DIR" -type f -name "*.html" ! -name "index*.html" \
         pagination+="</nav>"
 
         # Generate the complete content body
-        content_body="<ul style='list-style:none;padding:0;'>$article_list</ul>$pagination"
+        if [ -f "$ARTICLE_TEMPLATE" ]; then
+            # When using article template, don't wrap in ul/li - let template handle structure
+            content_body="$article_list$pagination"
+        else
+            # Fallback: wrap in list for backward compatibility
+            content_body="<ul style='list-style:none;padding:0;'>$article_list</ul>$pagination"
+        fi
 
         # Use INDEX_TEMPLATE if available, otherwise fallback to simple HTML
         if [ -f "$INDEX_TEMPLATE" ]; then
