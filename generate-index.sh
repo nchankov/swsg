@@ -121,13 +121,20 @@ find "$OUTPUT_DIR" -type f -name "*.html" ! -name "index*.html" \
                 rel_path=$(realpath --relative-to="$dir" "$html_dir/$featured")
             fi
 
-            # Extract excerpt from the first paragraph in <main> section
-            excerpt=$(sed -n '/<main>/,/<\/main>/p' "$file" | grep -oP '(?<=<p>)[^<]+' | head -n1 | cut -c1-150)
-            [ ${#excerpt} -gt 147 ] && excerpt="${excerpt}..."
+            # Extract excerpt from the first paragraph after header
+            full_excerpt=$(sed -n '/<\/header>/,/<\/body>/p' "$file" | grep -oP '(?<=<p>)[^<]+' | head -n1)
+            
+            # Create longer excerpt for article display (350 characters)
+            excerpt=$(echo "$full_excerpt" | cut -c1-350)
+            [ ${#full_excerpt} -gt 350 ] && excerpt="${excerpt}..."
+            
+            # Create shorter excerpt for meta description (150 characters)
+            short_excerpt=$(echo "$full_excerpt" | cut -c1-150)
+            [ ${#full_excerpt} -gt 147 ] && short_excerpt="${short_excerpt}..."
 
-            # Capture the first article's excerpt for meta description (first article on each page)
-            if [ $i -eq $start ] && [ -n "$excerpt" ]; then
-                first_excerpt="$excerpt"
+            # Capture the first article's short excerpt for meta description (first article on each page)
+            if [ $i -eq $start ] && [ -n "$short_excerpt" ]; then
+                first_excerpt="$short_excerpt"
             fi
 
             # Render article using template or fallback
