@@ -18,16 +18,19 @@ if [ -L "$OUTPUT_DIR" ]; then
 fi
 DOMAIN="${DOMAIN:-https://example.com}"
 SITEMAP_FILE="${SITEMAP_FILE:-sitemap.xml}"
-
-
+SITEMAP_XSL="${SITEMAP_XSL:-}"
 
 sitemap_path="$OUTPUT_DIR/$SITEMAP_FILE"
 
 # Start sitemap XML
-cat > "$sitemap_path" << 'EOF'
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-EOF
+{
+    echo '<?xml version="1.0" encoding="UTF-8"?>'
+    # Add XSL stylesheet reference if SITEMAP_XSL is provided
+    if [ -n "$SITEMAP_XSL" ]; then
+        echo "<?xml-stylesheet type=\"text/xsl\" href=\"$SITEMAP_XSL\"?>"
+    fi
+    echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+} > "$sitemap_path"
 
 echo "🗺️  Generating sitemap: $sitemap_path"
 
