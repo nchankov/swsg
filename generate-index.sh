@@ -11,6 +11,7 @@ source "$DIR/lib/env-loader.sh"
 PROJECT_DIR=$(parse_project_args "$@")
 load_env_with_fallback "$PROJECT_DIR" "$DIR"
 
+INPUT_DIR="${INPUT_DIR:-$DIR/src}"
 OUTPUT_DIR="${OUTPUT_DIR:-$DIR/dist}"
 # Convert relative path to absolute and resolve symlinks
 if [[ "$OUTPUT_DIR" == ./* ]]; then
@@ -109,16 +110,23 @@ find "$OUTPUT_DIR" -type f -name "*.html" ! -name "index*.html" \
             title=$(grep -oP '(?<=<title>)[^<]+' "$file" | head -n1)
             [ -z "$title" ] && title=$(basename "$file" .html)
 
-            # Extract featured image from HTML (first non-logo image)
-            # Get all img src attributes and filter out logos, take the first one
-            featured=$(grep -oP 'src="[^"]*"' "$file" | grep -v logo | head -1 | cut -d'"' -f2)
+            # Extract featured image from corresponding markdown file
+            # Convert HTML file path back to markdown file path
+            html_rel_path="${file#$OUTPUT_DIR/}"
+            md_file="$INPUT_DIR/${html_rel_path%.html}.md"
+            
+            # Extract featured image from YAML frontmatter
+            featured=""
             rel_path=""
-
-            # Compute relative path from index page to featured image
-            if [ -n "$featured" ]; then
-                # Path of the HTML page containing the image
-                html_dir=$(dirname "$file")
-                rel_path=$(realpath --relative-to="$dir" "$html_dir/$featured")
+            if [ -f "$md_file" ]; then
+                featured=$(grep -oP '^featured:\s*\K.*' "$md_file" | head -n1)
+                
+                # Compute relative path from index page to featured image
+                if [ -n "$featured" ]; then
+                    # Path of the HTML page containing the image
+                    html_dir=$(dirname "$file")
+                    rel_path=$(realpath --relative-to="$dir" "$html_dir/$featured")
+                fi
             fi
 
             # Extract excerpt from the first paragraph after header
