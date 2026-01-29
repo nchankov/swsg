@@ -51,13 +51,18 @@ find "$INPUT_DIR" -type f -name "*.md" | while read -r file; do
         title=$(grep -oP '^title:\s*\K.*' "$file" | head -n1)
         [ -z "$title" ] && title=$(basename "$file" .md)
         
+        # Get the description from the markdown file
+        description=$(grep -oP '^description:\s*\K.*' "$file" | head -n1)
+        
         # Escape special characters for sed (& \ and |)
         title_escaped=$(echo "$title" | sed 's/[&\|]/\\&/g')
+        description_escaped=$(echo "$description" | sed 's/[&\|]/\\&/g')
         css_escaped=$(echo "$CSS" | sed 's/[&\|]/\\&/g')
         featured_escaped=$(echo "$featured" | sed 's/[&\|]/\\&/g')
         
         # Replace placeholders using sed with new {{}} syntax
         sed -i "s|{{title}}|$title_escaped|g" "$output_path"
+        sed -i "s|{{description}}|$description_escaped|g" "$output_path"
         sed -i "s|{{css}}|$css_escaped|g" "$output_path"
         sed -i "s|{{date}}|$(date +%Y-%m-%d)|g" "$output_path"
         sed -i "s|{{year}}|$current_year|g" "$output_path"

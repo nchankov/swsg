@@ -77,8 +77,9 @@ excerpt = os.environ.get('EXCERPT', '')
 year = os.environ.get('YEAR', '')
 has_featured = os.environ.get('HAS_FEATURED', 'false')
 
-# Decode HTML entities in title (e.g., &amp; -> &)
+# Decode HTML entities in title and excerpt (e.g., &amp; -> &)
 title = html.unescape(title)
+excerpt = html.unescape(excerpt)
 
 # Handle @if(featured)...@endif blocks
 if has_featured == 'true':
@@ -185,6 +186,11 @@ find "$OUTPUT_DIR" -type f -name "*.html" ! -name "index*.html" \
 
             # Extract excerpt from the first paragraph after header
             full_excerpt=$(sed -n '/<\/header>/,/<\/body>/p' "$file" | grep -oP '(?<=<p>)[^<]+' | head -n1)
+            
+            # If no excerpt found in HTML, try to get description from markdown
+            if [ -z "$full_excerpt" ] && [ -f "$md_file" ]; then
+                full_excerpt=$(grep -oP '^description:\s*\K.*' "$md_file" | head -n1)
+            fi
             
             # Create longer excerpt for article display (350 characters)
             excerpt=$(echo "$full_excerpt" | cut -c1-350)
